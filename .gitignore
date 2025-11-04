@@ -169,7 +169,13 @@ data/
 *.json
 *.parquet
 *.feather
+# But allow specific files tracked via Git LFS
+!data/ember2018/*.csv
+!data/ember2018/*.npy
+!data/ember2018/
 
+# Also allow .gitattributes in subdirs
+!.gitattributes
 # Model files
 models/
 *.pkl
