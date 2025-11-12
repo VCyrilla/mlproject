@@ -9,6 +9,7 @@
 *.pkl
 *.h5
 *.onnx
+*.npy
 
 # Folders
 TraceBox/samples/
