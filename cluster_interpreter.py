@@ -1,37 +1,61 @@
-# cluster_interpreter.py — INTERPRET VIA TOP FEATURES
+# cluster_interpreter.py — FINAL: ACCURATE GROUPING
 import pandas as pd
 import json
-import os
-import numpy as np
+from collections import Counter
 
-DATA_PATH = 'data/ember2018'
-RESULTS_PATH = 'results'
-os.makedirs(RESULTS_PATH, exist_ok=True)
-
-df = pd.read_csv(os.path.join(DATA_PATH, 'processed_train.csv'))
-with open(os.path.join(DATA_PATH, 'feature_names.json')) as f:
-    feature_names = json.load(f)
-
-cluster_labels = pd.read_csv(os.path.join(RESULTS_PATH, 'cluster_labels.csv'))['cluster']
+df = pd.read_csv('data/ember2018/processed_train.csv')
+cluster_labels = pd.read_csv('results/cluster_labels.csv')['cluster']
 df['cluster'] = cluster_labels
 
 mapping = {}
-for cluster_id in sorted(df['cluster'].unique()):
-    cluster_df = df[df['cluster'] == cluster_id]
-    feature_means = cluster_df.drop(['label', 'cluster'], axis=1).mean()
-    top_features = feature_means.nlargest(10).index.tolist()
-    mapping[f"Cluster {cluster_id}"] = {
-        "top_features": top_features,
-        "interpretation": "High activity in engineered features (e.g., byte entropy, imports, section entropy)"
+for cid in sorted(df['cluster'].unique()):
+    cluster_df = df[df['cluster'] == cid]
+    means = cluster_df.drop(['label', 'cluster'], axis=1).mean()
+    top_feats = means.nlargest(10).index.tolist()
+    
+    # ACCURATE GROUP DETECTION
+    groups = Counter()
+    for f in top_feats:
+        if f.startswith('import_'): groups['imports'] += 1
+        elif f.startswith('section_'): groups['sections'] += 1
+        elif f.startswith('byte_hist') or f.startswith('entropy_hist'): groups['byte_entropy'] += 1
+        elif f.startswith('header_'): groups['header'] += 1
+        elif f.startswith('string_'): groups['strings'] += 1
+        elif f.startswith('export_'): groups['exports'] += 1
+        elif f.startswith('datadirectory_'): groups['data_directories'] += 1
+        else: groups['other'] += 1
+    
+    dominant = groups.most_common(1)[0][0] if groups else "unknown"
+    
+    # HUMAN-READABLE INTERPRETATION
+    interp_map = {
+        'imports': "High imported API count — likely C2, droppers, or network activity",
+        'sections': "Section anomalies (size, entropy) — likely packers or obfuscation",
+        'byte_entropy': "Byte-level entropy patterns — packed, encrypted, or compressed code",
+        'header': "PE header anomalies — modified timestamps, sizes, or characteristics",
+        'strings': "Embedded strings — URLs, registry keys, or debug paths",
+        'exports': "DLL exports — likely backdoors or loaders",
+        'data_directories': "Resource or overlay data — icons, payloads",
+        'other': "Mixed or general file properties"
     }
-    print(f"Cluster {cluster_id}: {top_features[:5]}")
+    
+    interpretation = interp_map.get(dominant, "Unknown behavior")
+    
+    mapping[f"Cluster {cid}"] = {
+        "top_features": top_feats,
+        "dominant_group": dominant,
+        "interpretation": interpretation
+    }
+    
+    print(f"Cluster {cid} → {dominant}")
+    print(f"   Top: {', '.join(top_feats[:3])}")
 
-with open(os.path.join(RESULTS_PATH, 'cluster_interpretation.json'), 'w') as f:
+with open('results/cluster_interpretation.json', 'w') as f:
     json.dump(mapping, f, indent=2)
 
-print("\nCLUSTER INTERPRETATION COMPLETE (EMBER FEATURES):")
+print("\nCLUSTER INTERPRETATION COMPLETE:")
 print("="*50)
 for k, v in mapping.items():
     print(f"{k} → {v['interpretation']}")
-    print(f"   Top features: {', '.join(v['top_features'][:5])}")
+    print(f"   Top: {', '.join(v['top_features'][:3])}")
 print("="*50)

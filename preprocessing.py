@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 import os
 
-def preprocess_data(input_path='D:\\Academics\\Year 4\\Semester II\\ICSProject II\\mlproject\\data\\ember2018\\processed_train.csv', output_path='data/ember2018', n_features=500, test_size=0.2):
+def preprocess_data(input_path=r'C:\ICS4D\ICS Project II\mlproject\data\ember2018\processed_train.csv', output_path='data/ember2018', n_features=500, test_size=0.2):
     os.makedirs(output_path, exist_ok=True)
     
     # Step 1: Load the processed data

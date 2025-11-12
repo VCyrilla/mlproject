@@ -9,7 +9,7 @@ import json
 import pandas as pd
 import numpy as np
 
-PROJECT_ROOT = r'D:\Academics\Year 4\Semester II\ICSProject II\mlproject'
+PROJECT_ROOT = r'C:\ICS4D\ICS Project II\mlproject'
 CACHE_DIR    = os.path.join(PROJECT_ROOT, 'huggingface_cache')
 os.makedirs(CACHE_DIR, exist_ok=True)
 
