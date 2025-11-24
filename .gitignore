@@ -18,4 +18,3 @@ huggingface_cache/
 .cache/
 __pycache__/
 *.pyc
-node_modules
